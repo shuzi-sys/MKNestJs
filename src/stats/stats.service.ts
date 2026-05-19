@@ -25,6 +25,10 @@ export class StatsService {
     }
     //
 
+    async getByUserId(userId: number){
+        return this.prisma.stats.findFirst({where:{id:userId}})
+    }
+
     async create(userId: number, createStatsDto: CreateStatsDto){
         return this.prisma.stats.create({
             data: {

@@ -26,6 +26,11 @@ if (selfuserId != userId && selfuser.isAdmin != true)
     }
 }
     
+// quizas?
+async getByUserId(userId: number){
+    return this.prisma.user.findUnique({where:{id:userId}})
+}
+
 async create(createUserDto: CreateUserDto){
     const PassHash = await bcrypt.hash(createUserDto.password!, 10)
     return this.prisma.user.create({

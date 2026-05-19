@@ -1,4 +1,5 @@
-import { IsInt, IsNotEmpty, IsString, MaxLength } from "class-validator"
+import { PostStatus } from "@prisma/client"
+import { IsEnum, IsInt, IsNotEmpty, IsString, MaxLength } from "class-validator"
 
 export class PostDto {
     
@@ -14,5 +15,8 @@ export class PostDto {
     @IsInt()
     @IsNotEmpty()
     price!: number
+
+    @IsEnum(PostStatus)
+    status!: PostStatus
 
 }

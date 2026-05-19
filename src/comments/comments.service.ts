@@ -25,6 +25,12 @@ private async commentOwnershipValidation(commentid: number, userid: number){
 }
 //
 
+async getByUserId(userId: number){
+    return this.prisma.comment.findMany({where:{ownerId:userId}})
+}
+
+
+
 async create(userId: number, createCommentDto: CreateCommentDto){
 return this.prisma.comment.create({
     data: {

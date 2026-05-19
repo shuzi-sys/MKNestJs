@@ -22,6 +22,18 @@ export class PostsService {
             }
     }
     //
+
+    /* si esto fuese un proyecto real deberia haber un get que se adapte al algoritmo de busqueda
+    el cual trabaja segun las preferencias del usuario, descuentos actuales, hot sales y demas y 
+    que use paginacion*/
+
+    async getByUserId(userId: number){
+        return await this.prisma.post.findMany({where:{ownerId:userId}})
+    }
+    async getByPostId(postId: number){
+        return this.prisma.post.findUnique({where:{id:postId}})
+    }
+
     async create(userId: number, createPostDto: CreatePostDto){
         return this.prisma.post.create({
             data:{

@@ -54,6 +54,8 @@ model Stats {
   userId           Int  @unique
   buyerReputation  Int  @default(0)
   sellerReputation Int  @default(0)
+  buyerReputationCount Int @default(0)
+  sellerReputationCount Int @default(0)
 }
 
 model Post {

@@ -9,9 +9,26 @@ import { TransactionStatus } from '@prisma/client'
 export class TransactionsService {
     constructor(private prisma: PrismaService){}
 
-    private async transactionValidation(postId: number){
-        const post = await this.prisma.post.findUnique({where: {id:postId}, select:{title:true}})
-        
+
+
+    async getByUserIdAsBuyer(userId: number){
+        return this.prisma.transaction.findMany({where:{buyerId:userId}})
+    }
+
+    async getByUserIdAsSeller(userId: number){
+        return this.prisma.transaction.findMany({where:{sellerId:userId}})
+    }
+
+    async getByUserId(userId: number){
+        const [asBuyer, asSeller] = await this.prisma.$transaction([
+            this.prisma.transaction.findMany({where:{buyerId:userId}}),
+            this.prisma.transaction.findMany({where:{sellerId:userId}})
+        ])
+        return asBuyer.concat(asSeller)
+    }
+
+    async getById(transactionId: number){
+        return this.prisma.transaction.findUnique({where:{id:transactionId}})
     }
 
     async create(userId: number, sellerId: number, postId: number, createTransactionsDto: CreateTransactionsDto){
@@ -42,6 +59,7 @@ export class TransactionsService {
     */
 
     async update(selfId: number, transactionId: number, updateTransactionsDto: UpdateTransactionsDto){
+        // Este metodo ↓↓ no esta separado como validador en otra funcion porque necesito selects especificos.
         const transaction = await this.prisma.transaction.findUnique({where: {id:transactionId}, select: {buyerId: true, sellerId:true, status:true}})
         if (!transaction){
             throw new NotFoundException(Messages.transactions.notFound)
