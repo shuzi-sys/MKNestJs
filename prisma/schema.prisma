@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PostStatus {
+  ACTIVE
+  SOLD
+  PAUSED
+}
+
+enum TransactionStatus{
+  PENDING
+  CONFIRMED
+  SHIPPING
+  SHIPPED
+  COMPLETED
+  CANCELED
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  isAdmin          Boolean @default(false)
+  stats            Stats?
+  posts            Post[]
+  comments         Comment[]
+  buyerTransactions  Transaction[] @relation("BuyerTransactions")
+  sellerTransactions Transaction[] @relation("SellerTransactions")
+  reviewsGiven     Review[]      @relation("ReviewsGiven")
+  reviewsReceived  Review[]      @relation("ReviewsReceived")
+}
+
+model Stats {
+  id               Int  @id @default(autoincrement())
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           Int  @unique
+  buyerReputation  Int  @default(0)
+  sellerReputation Int  @default(0)
+}
+
+model Post {
+  id          Int        @id @default(autoincrement())
+  title       String     @db.VarChar(70)
+  description String
+  price       Int
+  status      PostStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+
+  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId      Int
+  comments     Comment[]
+  transactions Transaction[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.VarChar(2500)
+  createdAt DateTime @default(now())
+
+  owner          User      @relation(fields: [ownerId], references: [id])
+  ownerId        Int
+  parentPost     Post      @relation(fields: [parentPostId], references: [id], onDelete: Cascade)
+  parentPostId   Int
+  parentComment  Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  parentCommentId Int?
+  replies        Comment[] @relation("CommentReplies")
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  reason    String
+  amount    Int
+  value     Int
+  createdAt DateTime @default(now())
+  status    TransactionStatus @default(PENDING)
+
+  buyer    User @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  buyerId  Int
+  seller   User @relation("SellerTransactions", fields: [sellerId], references: [id])
+  sellerId Int
+  post     Post @relation(fields: [postId], references: [id])
+  postId   Int
+
+  reviews Review[]
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  score     Int
+  createdAt DateTime @default(now())
+  role      Role
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId Int
+  reviewer      User        @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewerId    Int
+  reviewed      User        @relation("ReviewsReceived", fields: [reviewedId], references: [id], onDelete: Cascade)
+  reviewedId    Int
+
+  @@unique([transactionId, reviewerId])
+}
