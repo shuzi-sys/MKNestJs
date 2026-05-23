@@ -19,4 +19,8 @@ export class PostDto {
     @IsEnum(PostStatus)
     status!: PostStatus
 
+    @IsInt()
+    @IsNotEmpty()
+    amount!: number
+    
 }

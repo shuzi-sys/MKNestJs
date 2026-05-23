@@ -1,14 +1,22 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReviewsDto } from './reviews.dto/create-reviews.dto';
 import { Role } from '@prisma/client';
-
+import { Messages } from 'src/error-messages/error-messages';
 // no, no tiene "update" ni "delete" porque no lo veia muy logico
-// es un poco raro que los marketplaces te dejen editarlas / eliminarlas y la complejidad me iba a tomar bastante
+// es un poco raro que los marketplaces te dejen editarlas / eliminarlas
 
 @Injectable()
 export class ReviewsService {
     constructor(private prisma: PrismaService){}
+
+    async getByUserIdWithRole(userId: number, role : 'buyer' | 'seller'){
+        switch(role){
+            case 'buyer': {return this.getByUserIdAsBuyer(userId)}
+            case 'seller': {return this.getByUserIdAsSeller(userId)}
+            default: { throw new ForbiddenException('Review con rol no valido') }
+        }
+    }
 
     // ESTA se usa cuando queres ver que opinan otros vendedores con respecto a un comprador
     async getByUserIdAsBuyer(userId: number){
@@ -20,7 +28,9 @@ export class ReviewsService {
         return this.prisma.review.findMany({where:{reviewedId:userId, role: Role.BUYER}})
     }
 
-    async getbyId(reviewId: number){
+    async getById(reviewId: number){
+        const review = this.prisma.review.findUnique({where:{id:reviewId}})
+        if (!review) { throw new NotFoundException('not found') }
         return this.prisma.review.findUnique({where:{id:reviewId}})
     }
     
@@ -29,7 +39,8 @@ export class ReviewsService {
     de compra o venta y cuál. 
     El tema es que también necesito computar las reputaciones para hacer los calculos de rep
     y eso implica traer también las stats de los implicados. No podía dividirlo en dos query
-    porque el delay se iba al carajo, así que queda dentro de la misma query de validacion*/
+    porque el delay se iba al carajo, así que queda dentro de la misma query de validacion
+    Tambien reconozco que con esfuerzo habria podrido simplificarlo un poco*/
     async create(userId: number, transactionId: number, createReviewsDto: CreateReviewsDto){
         
         const transaction = await this.prisma.transaction.findFirst(
@@ -38,20 +49,22 @@ export class ReviewsService {
                 seller: {select:{stats:true, reviewsGiven:true, reviewsReceived:true}},
                 buyer: {select:{stats:true, reviewsGiven:true, reviewsReceived:true}}
             }})
-        
+        if (!transaction){
+            throw new NotFoundException('Transaccion no encontrada / reemplazar dialogo al final')
+        }
         const buyerId = transaction!.buyerId
         const sellerId = transaction!.sellerId
 
         // validación antes de review
-        if (userId != sellerId && userId != sellerId){
-            throw new ForbiddenException('no')
+        if (userId != sellerId && userId != buyerId){
+            throw new ForbiddenException('Poner mensaje de transaccion forbidden!!!')
         }
         const role = userId === sellerId ? Role.SELLER : Role.BUYER
 
         switch (role){
             case Role.BUYER:{
                 const newCount = transaction!.seller!.stats!.sellerReputationCount + 1
-                const newRep = (transaction!.seller!.stats!.sellerReputation + createReviewsDto.score!) / newCount
+                const newRep = (transaction!.seller!.stats!.sellerReputation + createReviewsDto!.score!) / newCount
                 return this.prisma.$transaction([
                     this.prisma.review.create({
                         data: {

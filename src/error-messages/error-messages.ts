@@ -13,7 +13,8 @@ export const Messages = {
     },
     comments:{
         notFound: 'Comentario no encontrado',
-        forbidden: 'No tenes permiso para manipular este usuario'
+        forbidden: 'No tenes permiso para manipular este usuario',
+        parentNotFound: 'No podes responder a un comentario que no existe o comparte publicacion'
     },
     transactions:{
         atpForbidden: 'No es posible establecer el estado deseado en esta etapa',

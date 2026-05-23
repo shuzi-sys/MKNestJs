@@ -63,6 +63,7 @@ model Post {
   title       String     @db.VarChar(70)
   description String
   price       Int
+  amount      Int @default(1)
   status      PostStatus @default(ACTIVE)
   createdAt   DateTime   @default(now())
 

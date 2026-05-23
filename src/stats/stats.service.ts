@@ -42,7 +42,7 @@ export class StatsService {
     await this.commentOwnershipValidation(statsId, userId)
     return this.prisma.stats.update({where:{id:userId}, data: updateStatsDto})
     }
-    async delete(statsId: number, userId: number){
+    async remove(statsId: number, userId: number){
     await this.commentOwnershipValidation(statsId, userId)
     await this.prisma.stats.delete({where: {id:statsId}})
     }
