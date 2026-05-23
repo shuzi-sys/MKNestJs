@@ -15,12 +15,5 @@ export class ReviewsController {
     getById(@Param('id') id:string){
         return this.reviewsService.getById(+id)
     }
-    //este va en user y falta el de id normal
-    /*
-    @Get(':id')
-    @HttpCode(200)
-    getByUserIdWithRole(@Param('id') id:string, @Query('role') role: 'buyer' | 'seller'){
-        return this.reviewsService.getByUserIdWithRole(+id, role)
-    }
-    */
+
 }

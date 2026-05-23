@@ -50,14 +50,14 @@ export class ReviewsService {
                 buyer: {select:{stats:true, reviewsGiven:true, reviewsReceived:true}}
             }})
         if (!transaction){
-            throw new NotFoundException('Transaccion no encontrada / reemplazar dialogo al final')
+            throw new NotFoundException(Messages.transactions.notFound)
         }
         const buyerId = transaction!.buyerId
         const sellerId = transaction!.sellerId
 
         // validación antes de review
         if (userId != sellerId && userId != buyerId){
-            throw new ForbiddenException('Poner mensaje de transaccion forbidden!!!')
+            throw new ForbiddenException(Messages.transactions.forbidden)
         }
         const role = userId === sellerId ? Role.SELLER : Role.BUYER
 
